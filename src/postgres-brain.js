@@ -45,11 +45,12 @@ module.exports = function(robot) {
   }
 
   const client = new Postgres.Client(parseConnectionString(database_url));
+  robot.brain.on('close', () => client.end());
+  robot.brain.on('save', function(data) {
+    client.query("UPDATE hubot SET storage = $1", [data]).then(() => robot.logger.debug("postgres-brain saved."));
+  });
+
   client.connect().then(function() {
-    robot.brain.on('close', () => client.end());
-    robot.brain.on('save', function(data) {
-      client.query("UPDATE hubot SET storage = $1", [data]).then(() => robot.logger.debug("postgres-brain saved."));
-    });
     robot.logger.debug(`postgres-brain connected to ${database_url}.`);
     return client.query("SELECT storage FROM hubot LIMIT 1")
   }).then(function (res) {

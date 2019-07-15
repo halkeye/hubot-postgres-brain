@@ -27,7 +27,7 @@
 //   Gavin Mogan
 
 const Postgres = require('pg');
-Postgres.defaults.ssl = true;
+const { parse: parseConnectionString } = require('pg-connection-string')
 
 // sets up hooks to persist the brain into postgres.
 module.exports = function(robot) {
@@ -44,27 +44,23 @@ module.exports = function(robot) {
     throw new Error('HUBOT_BRAIN_SAVE_INTERVAL must be an integer');
   }
 
-  const client = new Postgres.Client(database_url);
-  client.connect();
-  robot.logger.debug(`postgres-brain connected to ${database_url}.`);
-
-  let query = client.query("SELECT storage FROM hubot LIMIT 1");
-  query.on('row', function(row) {
-    if (!row.storage) {
-      robot.brain.mergeData(row['storage']);
+  const client = new Postgres.Client(parseConnectionString(database_url));
+  client.connect().then(function() {
+    robot.brain.on('close', () => client.end());
+    robot.brain.on('save', function(data) {
+      client.query("UPDATE hubot SET storage = $1", [data]).then(() => robot.logger.debug("postgres-brain saved."));
+    });
+    robot.logger.debug(`postgres-brain connected to ${database_url}.`);
+    return client.query("SELECT storage FROM hubot LIMIT 1")
+  }).then(function (res) {
+    return res.rows[0];
+  }).then(function (row) {
+    if (row.storage) {
+      robot.brain.mergeData(row.storage);
       robot.logger.debug("pg-brain loaded.");
       robot.brain.resetSaveInterval(save_interval);
       robot.logger.debug(`robot.brain saveInterval set to ${save_interval}.`);
     }
-  });
-
-  client.on("error", err => robot.logger.error(err));
-
-  robot.brain.on('save', function(data) {
-    query = client.query("UPDATE hubot SET storage = $1", [data]);
-    robot.logger.debug("postgres-brain saved.");
-  });
-
-  robot.brain.on('close', () => client.end());
+  }).catch(err => robot.logger.error(err));
 };
 

@@ -23,7 +23,7 @@
     "url": "https://github.com/halkeye/hubot-postgres-brain/issues"
   },
   "dependencies": {
-    "pg": "^7.11.0",
+    "pg": "^8.0.0",
     "pg-connection-string": "^2.1.0"
   },
   "devDependencies": {

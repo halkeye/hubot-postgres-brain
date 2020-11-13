@@ -23,12 +23,12 @@
     "url": "https://github.com/halkeye/hubot-postgres-brain/issues"
   },
   "dependencies": {
-    "pg": "^8.0.0",
-    "pg-connection-string": "^2.1.0"
+    "pg": "^8.5.0",
+    "pg-connection-string": "^2.4.0"
   },
   "devDependencies": {
     "hubot": "^3.3.2",
-    "mocha": "^7.0.0",
+    "mocha": "^8.2.1",
     "np": "^7.0.0",
     "should": "^13.2.3"
   },
